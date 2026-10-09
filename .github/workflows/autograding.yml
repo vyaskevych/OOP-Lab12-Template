@@ -1,0 +1,37 @@
+name: Autograding Tests
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    # Підставляємо офіційні тести з шаблону: зміни тестів у репозиторії студента ігноруються.
+    - name: Fetch official tests
+      run: |
+        BASE=https://raw.githubusercontent.com/vyaskevych/OOP-Lab12-Template/main/Lab12_Tests
+        curl -fsSL "$BASE/DelegationTests.cs" -o Lab12_Tests/DelegationTests.cs
+        curl -fsSL "$BASE/Lab12_Tests.csproj" -o Lab12_Tests/Lab12_Tests.csproj
+
+    - name: Restore dependencies
+      run: dotnet restore Lab12_Tests/Lab12_Tests.csproj
+
+    - name: Build
+      run: dotnet build Lab12_Tests/Lab12_Tests.csproj --no-restore
+
+    - name: Test
+      run: dotnet test Lab12_Tests/Lab12_Tests.csproj --no-build --verbosity normal
